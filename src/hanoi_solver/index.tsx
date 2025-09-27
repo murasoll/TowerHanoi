@@ -26,6 +26,14 @@ interface CompleteSolution extends SearchResult {
   totalMoves: number;
 }
 
+// NodeGraphNode structure to represent the tree
+interface NodeGraphNode {
+  state: State;
+  move?: string;
+  children: NodeGraphNode[];
+  step?: number; // step in solution path if part of solution
+}
+
 interface SolutionState {
   path: Move[];
   nodesExplored: number;
@@ -35,6 +43,7 @@ interface SolutionState {
   phase2?: SearchResult;
   totalMoves?: number;
   error?: string;
+  tree?: NodeGraphNode;
 }
 
 const HanoiSolver: React.FC = () => {
@@ -43,6 +52,7 @@ const HanoiSolver: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [animationSpeed, setAnimationSpeed] = useState<number>(500);
   const [currentGoal, setCurrentGoal] = useState<Goal>('B');
+  const [showFullTree, setShowFullTree] = useState<boolean>(true);
 
   // State representation: [rod_A, rod_B, rod_C] where each rod is array of disks (1=smallest, 4=largest)
   const initialState: State = [[4, 3, 2, 1], [], []];
@@ -99,74 +109,155 @@ const HanoiSolver: React.FC = () => {
     return moves;
   };
 
+  // NodeGraphNode structure to represent the tree
+  interface NodeGraphNode {
+    state: State;
+    move?: string;
+    children: NodeGraphNode[];
+    step?: number; // step in solution path if part of solution
+  }
+
   // BFS Algorithm
-  const solveBFS = useCallback((startState: State, goal: Goal): SearchResult | null => {
+  const solveBFS = useCallback((startState: State, goal: Goal): (SearchResult & { tree: NodeGraphNode }) | null => {
     interface QueueItem {
       state: State;
       path: Move[];
+      node: NodeGraphNode;
     }
 
-    const queue: QueueItem[] = [{ state: startState, path: [] }];
-    const visited = new Set<string>([stateToString(startState)]);
+    const queue: QueueItem[] = [{
+      state: startState,
+      path: [],
+      node: { state: startState, children: [] }
+    }];
+    const visited = new Map<string, NodeGraphNode>();
+    visited.set(stateToString(startState), queue[0].node);
     let nodesExplored = 0;
-    
+    let solutionPath: Move[] = [];
+    let solutionNode: NodeGraphNode | null = null;
+
     while (queue.length > 0) {
       const current = queue.shift()!;
-      const { state, path } = current;
+      const { state, path, node } = current;
       nodesExplored++;
-      
+
       if (isGoalState(state, goal)) {
-        return { path, nodesExplored, algorithm: 'BFS', goal };
+        solutionPath = path;
+        solutionNode = node;
+        break;
       }
-      
+
       const moves = getValidMoves(state);
-      
       for (const move of moves) {
         const stateStr = stateToString(move.state);
-        
         if (!visited.has(stateStr)) {
-          visited.add(stateStr);
+          const childNode: NodeGraphNode = {
+            state: move.state,
+            move: move.move,
+            children: []
+          };
+          node.children.push(childNode);
+          visited.set(stateStr, childNode);
           queue.push({
             state: move.state,
-            path: [...path, move]
+            path: [...path, move],
+            node: childNode
           });
         }
       }
     }
-    
+
+    // Mark solution path in tree for highlighting
+    if (solutionNode && solutionPath.length > 0) {
+      let node = visited.get(stateToString(startState));
+      let step = 0;
+      let state = startState;
+      for (const move of solutionPath) {
+        const nextStr = stateToString(move.state);
+        const child = node?.children.find(n => stateToString(n.state) === nextStr);
+        if (child) {
+          child.step = ++step;
+          node = child;
+          state = move.state;
+        }
+      }
+    }
+
+    if (solutionPath.length > 0) {
+      return {
+        path: solutionPath,
+        nodesExplored,
+        algorithm: 'BFS',
+        goal,
+        tree: visited.get(stateToString(startState))!
+      };
+    }
     return null;
   }, []);
 
   // DFS Algorithm (with depth limit to prevent infinite recursion)
-  const solveDFS = useCallback((startState: State, goal: Goal): SearchResult | null => {
-    const visited = new Set<string>();
+  const solveDFS = useCallback((startState: State, goal: Goal): (SearchResult & { tree: NodeGraphNode }) | null => {
+    const visited = new Map<string, NodeGraphNode>();
     let nodesExplored = 0;
     const maxDepth = 30; // Increased depth limit for complete solution
-    
-    const dfsHelper = (state: State, path: Move[], depth: number): SearchResult | null => {
-      if (depth > maxDepth) return null;
-      
+    let solutionPath: Move[] = [];
+    let found = false;
+
+    const dfsHelper = (state: State, path: Move[], node: NodeGraphNode, depth: number): void => {
+      if (found || depth > maxDepth) return;
       const stateStr = stateToString(state);
-      if (visited.has(stateStr)) return null;
-      
-      visited.add(stateStr);
+      if (visited.has(stateStr)) return;
+      visited.set(stateStr, node);
       nodesExplored++;
-      
+
       if (isGoalState(state, goal)) {
-        return { path, nodesExplored, algorithm: 'DFS', goal };
+        solutionPath = path;
+        found = true;
+        return;
       }
-      
+
       const moves = getValidMoves(state);
-      
       for (const move of moves) {
-        const result = dfsHelper(move.state, [...path, move], depth + 1);
-        if (result) return result;
+        const childNode: NodeGraphNode = {
+          state: move.state,
+          move: move.move,
+          children: []
+        };
+        node.children.push(childNode);
+        dfsHelper(move.state, [...path, move], childNode, depth + 1);
+        if (found) return;
       }
-      
-      return null;
     };
-    
-    return dfsHelper(startState, [], 0);
+
+    const root: NodeGraphNode = { state: startState, children: [] };
+    dfsHelper(startState, [], root, 0);
+
+    // Mark solution path in tree for highlighting
+    if (solutionPath.length > 0) {
+      let node = visited.get(stateToString(startState));
+      let step = 0;
+      let state = startState;
+      for (const move of solutionPath) {
+        const nextStr = stateToString(move.state);
+        const child = node?.children.find(n => stateToString(n.state) === nextStr);
+        if (child) {
+          child.step = ++step;
+          node = child;
+          state = move.state;
+        }
+      }
+    }
+
+    if (solutionPath.length > 0) {
+      return {
+        path: solutionPath,
+        nodesExplored,
+        algorithm: 'DFS',
+        goal,
+        tree: visited.get(stateToString(startState))!
+      };
+    }
+    return null;
   }, []);
 
   // Solve complete problem: A → B → C
@@ -176,7 +267,6 @@ const HanoiSolver: React.FC = () => {
     setCurrentStep(0);
     
     setTimeout(() => {
-      // Phase 1: A → B
       const solveFunc = algorithm === 'BFS' ? solveBFS : solveDFS;
       const phase1 = solveFunc(initialState, 'B');
       
@@ -219,7 +309,8 @@ const HanoiSolver: React.FC = () => {
         algorithm,
         phase1: phase1,
         phase2: phase2,
-        totalMoves: phase1.path.length + phase2.path.length
+        totalMoves: phase1.path.length + phase2.path.length,
+        tree: phase1.tree // show phase1 tree for complete
       };
       
       setSolution(completeSolution);
@@ -335,13 +426,222 @@ const HanoiSolver: React.FC = () => {
     setAnimationSpeed(Number(e.target.value));
   };
 
+  // Helper to build a tree from the solution path (for visualization)
+  const buildNodeGraph = (startState: State, path: Move[]): NodeGraphNode => {
+    // Build a tree from the path (linear for optimal solution)
+    let root: NodeGraphNode = { state: startState, children: [] };
+    let current = root;
+    for (const move of path) {
+      const node: NodeGraphNode = { state: move.state, move: move.move, children: [] };
+      current.children.push(node);
+      current = node;
+    }
+    return root;
+  };
+
+  // --- Enhanced NodeGraph visualization ---
+  const renderStateAsLetters = (state: State): string => {
+    const [rodA, rodB, rodC] = state;
+    let result = '';
+    // Changed loop to go from 1 to 4 (smallest to largest)
+    for (let disk = 1; disk <= 4; disk++) {
+      if (rodA.includes(disk)) result += 'a';
+      else if (rodB.includes(disk)) result += 'b';
+      else if (rodC.includes(disk)) result += 'c';
+    }
+    return result;
+  };
+
+  interface TreeNode {
+    state: State;
+    stateStr: string;
+    isChosen: boolean;
+    children: TreeNode[];
+    level: number;  // depth in tree
+    position: number;  // horizontal position
+  }
+
+  const NodeGraph: React.FC<{ root: NodeGraphNode; highlightStep?: number }> = ({ root, highlightStep }) => {
+    const buildTreeInfo = (node: NodeGraphNode, level: number = 0, position: number = 0): TreeNode => {
+      const allMoves = getValidMoves(node.state);
+      const chosenChild = node.children.find(child => child.step !== undefined);
+      const sortedMoves = allMoves.sort((a, b) => 
+        renderStateAsLetters(a.state).localeCompare(renderStateAsLetters(b.state))
+      );
+
+      // Calculate children positions to center them under parent
+      const totalChildren = sortedMoves.length;
+      const startPos = position - (totalChildren - 1) / 2;
+
+      const children = sortedMoves.map((move, index) => {
+        const childNode = node.children.find(
+          child => stateToString(child.state) === stateToString(move.state)
+        );
+        const isChosen = childNode === chosenChild;
+
+        if (isChosen && childNode) {
+          return buildTreeInfo(childNode, level + 1, startPos + index);
+        }
+
+        return {
+          state: move.state,
+          stateStr: renderStateAsLetters(move.state),
+          isChosen: false,
+          children: [],
+          level: level + 1,
+          position: startPos + index
+        };
+      });
+
+      return {
+        state: node.state,
+        stateStr: renderStateAsLetters(node.state),
+        isChosen: node.step !== undefined,
+        children,
+        level,
+        position
+      };
+    };
+
+    const renderLines = (node: TreeNode): JSX.Element[] => {
+      const nodeSize = { width: 64, height: 28 }; // Approximate node dimensions
+      
+      return node.children.flatMap(child => {
+        // Calculate start and end points
+        const startX = node.position * 100;
+        const startY = node.level * 60 + nodeSize.height / 2;
+        const endX = child.position * 100;
+        const endY = child.level * 60 + nodeSize.height / 2;
+
+        return [
+          <div
+            key={`line-${node.stateStr}-${child.stateStr}`}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+            }}
+          >
+            <svg
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                overflow: 'visible',
+              }}
+            >
+              <line
+                x1={startX}
+                y1={startY}
+                x2={endX}
+                y2={endY}
+                stroke="#CBD5E0"
+                strokeWidth={1}
+              />
+            </svg>
+          </div>,
+          ...renderLines(child)
+        ];
+      });
+    };
+
+    const renderNode = (node: TreeNode): JSX.Element => {
+      const isHighlighted = highlightStep !== undefined && node.isChosen && 
+        node.children.some(child => child.isChosen);
+
+      return (
+        <div 
+          style={{
+            position: 'absolute',
+            left: `${node.position * 100}px`,
+            top: `${node.level * 60}px`,
+            transform: 'translate(-50%, 0)',
+            zIndex: 1
+          }}
+        >
+          <div 
+            className={`px-2 py-1 font-mono text-sm rounded ${
+              isHighlighted ? 'bg-yellow-100 border-2 border-yellow-400' :
+              node.isChosen ? 'bg-green-50 border-2 border-green-400' :
+              'bg-gray-50 border border-gray-200 text-gray-400'
+            }`}
+          >
+            {node.stateStr}
+          </div>
+        </div>
+      );
+    };
+
+    const treeInfo = buildTreeInfo(root);
+
+    // Helper to get tree dimensions for visualization
+    const getTreeDimensions = (node: TreeNode): { width: number; height: number } => {
+      // Find min/max position and max level
+      let minPos = node.position;
+      let maxPos = node.position;
+      let maxLevel = node.level;
+
+      const traverse = (n: TreeNode) => {
+        if (n.position < minPos) minPos = n.position;
+        if (n.position > maxPos) maxPos = n.position;
+        if (n.level > maxLevel) maxLevel = n.level;
+        n.children.forEach(traverse);
+      };
+      traverse(node);
+
+      // Each position is 100px apart, each level is 60px apart
+      return {
+        width: (maxPos - minPos + 1) * 100,
+        height: (maxLevel + 1) * 60
+      };
+    };
+
+    // Helper to render all nodes recursively
+    const renderAllNodes = (node: TreeNode): JSX.Element[] => {
+      return [
+        renderNode(node),
+        ...node.children.flatMap(renderAllNodes)
+      ];
+    };
+
+    const dimensions = getTreeDimensions(treeInfo);
+
+    return (
+      <div className="overflow-x-auto p-4">
+        <div 
+          style={{ 
+            position: 'relative',
+            width: `${dimensions.width}px`,
+            height: `${dimensions.height}px`,
+            margin: '0 auto',
+            transform: 'scale(0.7)',
+            transformOrigin: 'top center'
+          }}
+        >
+          {/* Render lines first (behind nodes) */}
+          {renderLines(treeInfo)}
+          
+          {/* Render all nodes */}
+          {renderAllNodes(treeInfo).map((node, index) => (
+            <React.Fragment key={index}>{node}</React.Fragment>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6 bg-gradient-to-b from-blue-50 to-indigo-100 min-h-screen">
       <h1 className="text-3xl font-bold text-center mb-2 text-indigo-900">
         Tower of Hanoi Solver
       </h1>
       <p className="text-center text-gray-700 mb-6">
-        4 Disks | Goal: A → B → C | Rule: Larger disk cannot go on smaller disk
+        4 Disks | Goal: A → B → C | Rule: Larger disk cannot go on top of a smaller disk
       </p>
 
       {/* Controls */}
@@ -516,6 +816,32 @@ const HanoiSolver: React.FC = () => {
                 )}
               </div>
             ))}
+          </div>
+
+          {/* Node Graph Visualization */}
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold mb-2 text-center">
+              Node Graph ({solution.algorithm})
+            </h3>
+            <div className="flex justify-center mb-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showFullTree}
+                  onChange={e => setShowFullTree(e.target.checked)}
+                  className="form-checkbox"
+                />
+                <span className="text-sm">Show Full Search Tree</span>
+              </label>
+            </div>
+            <div className="overflow-x-auto p-2 bg-gray-100 rounded">
+              <NodeGraph
+                root={showFullTree
+                  ? (solution.tree ?? { state: initialState, children: [] })
+                  : buildNodeGraph(initialState, solution.path)}
+                highlightStep={currentStep}
+              />
+            </div>
           </div>
         </div>
       )}
