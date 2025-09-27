@@ -1,5 +1,5 @@
 import React, { useState, useCallback, type JSX } from "react";
-import { Play, ChevronLeft, ChevronRight, Pause } from 'lucide-react';
+import { Play, ChevronLeft, ChevronRight, Pause, Search, BarChart3 } from 'lucide-react';
 
 // Type definitions
 type Rod = number[];
@@ -385,31 +385,33 @@ const HanoiSolver: React.FC = () => {
     const rods: Rod[] = [rodA, rodB, rodC];
 
     return (
-      <div className="flex justify-center gap-8 mb-6">
+      <div className="flex justify-center items-end gap-12 pb-8">
         {rods.map((rod, rodIndex) => (
           <div key={rodIndex} className="flex flex-col items-center">
-            <div className="text-lg font-bold mb-2">{rodNames[rodIndex]}</div>
+            <div className="text-2xl font-bold mb-4 text-indigo-800 bg-indigo-50 px-4 py-2 rounded-full shadow-sm">
+              {rodNames[rodIndex]}
+            </div>
             <div className="relative">
-              {/* Rod pole */}
-              <div className="w-2 h-32 bg-amber-800 mx-auto"></div>
-              {/* Base */}
-              <div className="w-20 h-3 bg-amber-900 -mt-1"></div>
+              {/* Rod pole with gradient */}
+              <div className="w-3 h-40 bg-gradient-to-b from-amber-600 to-amber-800 mx-auto rounded-t-lg shadow-lg"></div>
+              {/* Base with shadow */}
+              <div className="w-24 h-4 bg-gradient-to-b from-amber-800 to-amber-900 -mt-1 rounded-lg shadow-lg"></div>
               {/* Disks */}
-              <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-col-reverse">
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col-reverse">
                 {rod.map((disk, diskIndex) => {
-                  const width = 10 + disk * 8;
+                  const width = 12 + disk * 10;
                   const colors = [
-                    "bg-red-500",
-                    "bg-blue-500",
-                    "bg-green-500",
-                    "bg-purple-500",
+                    "bg-gradient-to-b from-red-400 to-red-600",
+                    "bg-gradient-to-b from-blue-400 to-blue-600", 
+                    "bg-gradient-to-b from-green-400 to-green-600",
+                    "bg-gradient-to-b from-purple-400 to-purple-600",
                   ];
                   return (
                     <div
                       key={diskIndex}
-                      className={`h-4 rounded ${
+                      className={`h-5 rounded-lg ${
                         colors[disk - 1]
-                      } border-2 border-gray-800 mb-1`}
+                      } border-2 border-gray-800 mb-1 shadow-lg transform hover:scale-105 transition-transform duration-200`}
                       style={{
                         width: `${width}px`,
                         marginLeft: `-${width / 2}px`,
@@ -629,7 +631,7 @@ const HanoiSolver: React.FC = () => {
           }}
         >
           <div
-            className={`px-2 py-1 font-mono text-sm rounded ${
+            className={`px-3 py-2 font-mono text-sm rounded-lg shadow-md ${
               isCurrent
                 ? "bg-orange-200 border-2 border-orange-500 shadow-lg"
                 : isHighlighted
@@ -708,233 +710,307 @@ const HanoiSolver: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6  min-h-screen">
-      <h1 className="text-3xl font-bold text-center mb-2 text-indigo-900">
-        Tower of Hanoi Solver
-      </h1>
-
-      <p className="text-center text-gray-600 mb-10">
-        اسم الطالب: محمد عبد الرسول حسن
-      </p>
-
-      <div className="flex justify-center items-center gap-5 mb-10">
-        {/* Controls */}
-        <div className="space-y-4 mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section */}
+      <div className="bg-white shadow-lg border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="text-center">
-            <h3 className="text-lg font-semibold mb-2">
-              تنفيذ الحل الكامل (A → B → C)
-            </h3>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => handleSolve("BFS")}
-                disabled={isSearching}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
-              >
-                {isSearching ? "جاري البحث..." : "BFS"}
-              </button>
-              <button
-                onClick={() => handleSolve("DFS")}
-                disabled={isSearching}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
-              >
-                {isSearching ? "جاري البحث..." : "DFS"}
-              </button>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-indigo-800 via-purple-700 to-indigo-900 bg-clip-text text-transparent mb-4">
+              Tower of Hanoi Solver
+            </h1>
+            <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-full shadow-md">
+              <span className="text-lg font-semibold text-indigo-800">اسم الطالب: محمد عبد الرسول حسن</span>
             </div>
           </div>
         </div>
-
-        {/* Tower Visualization */}
-        <div className="bg-white rounded-lg p-6">
-          {/* <h2 className="text-xl font-semibold mb-4 text-center">
-            الحالة الحالية (current state)
-          </h2> */}
-          {renderRods(getCurrentState())}
-        </div>
       </div>
 
-      {/* Solution Display */}
-      {solution && !solution.error && (
-        <div className="bg-white rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">
-            تم ايجاد الحل باستخدام {solution.algorithm}!
-            {solution.totalMoves && ` (كاملة: A → B → C)`}
-            {solution.goal && ` (مرحلة: A → ${solution.goal})`}
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="text-center p-4 bg-gray-50 rounded">
-              <div className="text-2xl font-bold text-blue-600">
-                {solution.totalMoves || solution.path.length}
-              </div>
-              <div className="text-sm text-gray-600">العدد الكلي للحركات</div>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded">
-              <div className="text-2xl font-bold text-green-600">
-                {solution.nodesExplored}
-              </div>
-              <div className="text-sm text-gray-600">
-                عدد ال Nodes المستكشفة
-              </div>
-            </div>
-            {solution.phase1 && solution.phase2 && (
-              <div className="text-center p-4 bg-gray-50 rounded">
-                <div className="text-lg font-bold text-purple-600">
-                  {solution.phase1.path.length} + {solution.phase2.path.length}
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* Main Content Grid */}
+          {/* Controls Section */}
+          <div className="bg-white mb-5 rounded-3xl shadow-xl p-8 border border-gray-100">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-3 mb-6">
+                <div className="p-3 bg-blue-100 rounded-full">
+                  <Search className="text-blue-600" size={24} />
                 </div>
-                <div className="text-sm text-gray-600">A→B + B→C</div>
+                <h3 className="text-2xl font-bold text-gray-800">
+                  تنفيذ الحل الكامل
+                </h3>
               </div>
-            )}
+              <p className="text-gray-600 mb-8 text-lg leading-relaxed">
+                اختر خوارزمية البحث لحل المسألة من A → B → C
+              </p>
+              
+              <div className="flex flex-col sm:flex-row justify-center gap-6">
+                <button
+                  onClick={() => handleSolve("BFS")}
+                  disabled={isSearching}
+                  className="group relative px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl hover:from-blue-600 hover:to-blue-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                >
+                  <div className="flex items-center justify-center gap-3">
+                    <Search size={20} />
+                    <span className="font-semibold text-lg">
+                      {isSearching ? "جاري البحث..." : "BFS"}
+                    </span>
+                  </div>
+                  {isSearching && (
+                    <div className="absolute inset-0 bg-white bg-opacity-20 rounded-2xl animate-pulse"></div>
+                  )}
+                </button>
+                
+                <button
+                  onClick={() => handleSolve("DFS")}
+                  disabled={isSearching}
+                  className="group relative px-8 py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-2xl hover:from-purple-600 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                >
+                  <div className="flex items-center justify-center gap-3">
+                    <BarChart3 size={20} />
+                    <span className="font-semibold text-lg">
+                      {isSearching ? "جاري البحث..." : "DFS"}
+                    </span>
+                  </div>
+                  {isSearching && (
+                    <div className="absolute inset-0 bg-white bg-opacity-20 rounded-2xl animate-pulse"></div>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Animation Controls */}
-          <div className="flex justify-center items-center gap-6 mb-8">
-        <button
-          onClick={prevStep}
-          disabled={currentStep === 0}
-          className="flex items-center gap-2 px-6 py-3 bg-white text-slate-700 rounded-xl shadow-md hover:shadow-lg hover:bg-slate-50 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none transition-all duration-200 border border-slate-200"
-        >
-          <ChevronRight size={20} />
-          <span className="font-medium">السابق</span>
-        </button>
-        
-        <div className="flex flex-col items-center gap-2">
-          <div className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow-lg">
-            <span className="text-lg font-bold">
-              الخطوة {currentStep + 1} من {solution.path.length}
-            </span>
-          </div>
           
-          {/* Progress Bar */}
-          <div className="w-48 h-2 bg-slate-200 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-blue-600 rounded-full transition-all duration-300"
-              style={{ width: `${((currentStep + 1) / solution.path.length) * 100}%` }}
-            ></div>
-          </div>
-        </div>
-        
-        <button
-          onClick={nextStep}
-          disabled={currentStep >= solution.path.length - 1}
-          className="flex items-center gap-2 px-6 py-3 bg-white text-slate-700 rounded-xl shadow-md hover:shadow-lg hover:bg-slate-50 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none transition-all duration-200 border border-slate-200"
-        >
-          <span className="font-medium">التالي</span>
-          <ChevronLeft size={20} />
-        </button>
-      </div>
 
-      {/* Speed and Auto-play Controls */}
-      <div className="flex justify-center items-center gap-8 p-4 bg-white rounded-xl shadow-md border border-slate-200">
-        <div className="flex items-center gap-4">
-          <label className="text-sm font-semibold text-slate-600 min-w-max">
-            السرعة:
-          </label>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-500">بطيء</span>
-            <div className="relative">
-              <input
-                type="range"
-                min="100"
-                max="1000"
-                step="50"
-                value={animationSpeed}
-                onChange={handleSpeedChange}
-                className="w-32 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer slider"
-                style={{
-                  background: `linear-gradient(to left, #3b82f6 0%, #3b82f6 ${((animationSpeed - 100) / 900) * 100}%, #e2e8f0 ${((animationSpeed - 100) / 900) * 100}%, #e2e8f0 100%)`
-                }}
-              />
-              <style jsx>{`
-                .slider::-webkit-slider-thumb {
-                  appearance: none;
-                  width: 20px;
-                  height: 20px;
-                  border-radius: 50%;
-                  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-                  cursor: pointer;
-                  border: 2px solid white;
-                  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-                }
-                .slider::-moz-range-thumb {
-                  width: 20px;
-                  height: 20px;
-                  border-radius: 50%;
-                  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-                  cursor: pointer;
-                  border: 2px solid white;
-                  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-                }
-              `}</style>
+        {/* Solution Display */}
+        {solution && !solution.error && (
+          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+            {/* Success Header */}
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-8">
+              <div className="text-center">
+                <div className="inline-flex items-center gap-3 mb-4">
+                  <div className="p-3 bg-white bg-opacity-20 rounded-full">
+                    <Search className="text-white" size={24} />
+                  </div>
+                  <h2 className="text-3xl font-bold">
+                    تم إيجاد الحل!
+                  </h2>
+                </div>
+                <p className="text-xl text-green-100">
+                  باستخدام خوارزمية {solution.algorithm}
+                  {solution.totalMoves && ` - الحل الكامل: A → B → C`}
+                  {solution.goal && ` - مرحلة: A → ${solution.goal}`}
+                </p>
+              </div>
             </div>
-            <span className="text-xs text-slate-500">سريع</span>
+
+			{/* Tower Visualization */}
+          <div className="bg-white rounded-3xl p-8 border border-gray-100">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">الحالة الحالية</h2>
+              <div className="w-20 h-1 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full mx-auto"></div>
+            </div>
+            {renderRods(getCurrentState())}
           </div>
-          <div className="px-3 py-1 bg-slate-100 rounded-lg">
-            <span className="text-sm font-mono text-slate-600">{animationSpeed}ms</span>
-          </div>
-        </div>
 
-        <div className="h-6 w-px bg-slate-300"></div>
+            <div className="p-8">
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 text-center border border-blue-200">
+                  <div className="text-4xl font-bold text-blue-600 mb-2">
+                    {solution.totalMoves || solution.path.length}
+                  </div>
+                  <div className="text-sm font-semibold text-blue-700">العدد الكلي للحركات</div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 text-center border border-green-200">
+                  <div className="text-4xl font-bold text-green-600 mb-2">
+                    {solution.nodesExplored}
+                  </div>
+                  <div className="text-sm font-semibold text-green-700">عدد ال Nodes المستكشفة</div>
+                </div>
+                
+                {solution.phase1 && solution.phase2 && (
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 text-center border border-purple-200">
+                    <div className="text-2xl font-bold text-purple-600 mb-2">
+                      {solution.phase1.path.length} + {solution.phase2.path.length}
+                    </div>
+                    <div className="text-sm font-semibold text-purple-700">A→B + B→C</div>
+                  </div>
+                )}
+              </div>
 
-        <button
-          onClick={autoPlay}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-md hover:shadow-lg ${
-            isAutoPlaying 
-              ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white hover:from-red-600 hover:to-pink-700' 
-              : 'bg-blue-600 text-white hover:bg-gray-800'
-          }`}
-        >
-          {isAutoPlaying ? <Pause size={18} /> : <Play size={18} />}
-          <span>{isAutoPlaying ? 'إيقاف' : 'تشغيل تلقائي'}</span>
-        </button>
-      </div>
+              {/* Animation Controls Section */}
+              <div className="bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl p-8 mb-8">
+                <h3 className="text-xl font-bold text-center text-gray-800 mb-8">تحكم في التشغيل</h3>
+                
+                {/* Step Navigation */}
+                <div className="flex justify-center items-center gap-8 mb-8">
+                  <button
+                    onClick={prevStep}
+                    disabled={currentStep === 0}
+                    className="flex items-center gap-3 px-6 py-3 bg-white text-slate-700 rounded-xl shadow-md hover:shadow-lg hover:bg-slate-50 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none transition-all duration-200 border border-slate-200"
+                  >
+                    <ChevronRight size={20} />
+                    <span className="font-medium">السابق</span>
+                  </button>
+                  
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg">
+                      <span className="text-xl font-bold">
+                        الخطوة {currentStep} من {solution.path.length}
+                      </span>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-64 h-3 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500 ease-out shadow-sm"
+                        style={{ width: `${((currentStep) / solution.path.length) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={nextStep}
+                    disabled={currentStep >= solution.path.length}
+                    className="flex items-center gap-3 px-6 py-3 bg-white text-slate-700 rounded-xl shadow-md hover:shadow-lg hover:bg-slate-50 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none transition-all duration-200 border border-slate-200"
+                  >
+                    <span className="font-medium">التالي</span>
+                    <ChevronLeft size={20} />
+                  </button>
+                </div>
 
-          {/* Current Move Display
-          {currentStep > 0 && currentStep <= solution.path.length && (
-            <div className="bg-yellow-100 border border-yellow-300 rounded p-3 mb-4">
-              <strong>Current Move:</strong> {solution.path[currentStep - 1].move}
-              {solution.phase1 && solution.phase2 && (
-                <span className="ml-2 text-sm text-gray-600">
-                  {currentStep <= solution.phase1.path.length ? '(Phase 1: A→B)' : '(Phase 2: B→C)'}
-                </span>
+                {/* Speed and Auto-play Controls */}
+                <div className="flex flex-col lg:flex-row justify-center items-center gap-8 p-6 bg-white rounded-2xl shadow-md border border-slate-200">
+                  <div className="flex items-center gap-6">
+                    <label className="text-sm font-semibold text-slate-600 min-w-max">
+                      السرعة:
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <span className="text-xs text-slate-500">بطيء</span>
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="100"
+                          max="1000"
+                          step="50"
+                          value={animationSpeed}
+                          onChange={handleSpeedChange}
+                          className="w-40 h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer slider"
+                          style={{
+                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((animationSpeed - 100) / 900) * 100}%, #e2e8f0 ${((animationSpeed - 100) / 900) * 100}%, #e2e8f0 100%)`
+                          }}
+                        />
+                        <style jsx>{`
+                          .slider::-webkit-slider-thumb {
+                            appearance: none;
+                            width: 24px;
+                            height: 24px;
+                            border-radius: 50%;
+                            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                            cursor: pointer;
+                            border: 3px solid white;
+                            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+                          }
+                          .slider::-moz-range-thumb {
+                            width: 24px;
+                            height: 24px;
+                            border-radius: 50%;
+                            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                            cursor: pointer;
+                            border: 3px solid white;
+                            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+                          }
+                        `}</style>
+                      </div>
+                      <span className="text-xs text-slate-500">سريع</span>
+                    </div>
+                    <div className="px-4 py-2 bg-slate-100 rounded-lg shadow-sm">
+                      <span className="text-sm font-mono text-slate-600">{animationSpeed}ms</span>
+                    </div>
+                  </div>
+
+                  <div className="h-6 w-px bg-slate-300 hidden lg:block"></div>
+
+                  <button
+                    onClick={autoPlay}
+                    className={`flex items-center gap-3 px-8 py-4 rounded-xl font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ${
+                      isAutoPlaying 
+                        ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white hover:from-red-600 hover:to-pink-700' 
+                        : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700'
+                    }`}
+                  >
+                    {isAutoPlaying ? <Pause size={20} /> : <Play size={20} />}
+                    <span>{isAutoPlaying ? 'إيقاف' : 'تشغيل تلقائي'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Current Move Display */}
+              {currentStep > 0 && currentStep <= solution.path.length && (
+                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-400 rounded-lg p-6 mb-8 shadow-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 bg-amber-100 rounded-full">
+                      <ChevronRight className="text-amber-600" size={20} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-amber-800 text-lg">الحركة الحالية:</div>
+                      <div className="text-amber-700 text-lg">{solution.path[currentStep - 1].move}</div>
+                      {solution.phase1 && solution.phase2 && (
+                        <div className="text-sm text-amber-600 mt-1">
+                          {currentStep <= solution.phase1.path.length ? '(المرحلة الأولى: A→B)' : '(المرحلة الثانية: B→C)'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
-            </div>
-          )} */}
 
-          {/* Node Graph Visualization */}
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold mb-2 text-center">
-              Node Graph ({solution.algorithm})
-            </h3>
-            <div className="flex justify-center mb-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showFullTree}
-                  onChange={(e) => setShowFullTree(e.target.checked)}
-                  className="form-checkbox"
-                />
-                <span className="text-sm">Show Full Search Tree</span>
-              </label>
-            </div>
-            <div className="bg-gray-100 rounded p-2">
-              <NodeGraph
-                root={
-                  showFullTree
-                    ? solution.tree ?? { state: initialState, children: [] }
-                    : buildNodeGraph(initialState, solution.path)
-                }
-                highlightStep={currentStep}
-              />
+              {/* Node Graph Visualization */}
+              <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-2xl p-8">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                    Node Graph ({solution.algorithm})
+                  </h3>
+                  <div className="flex justify-center mb-6">
+                    <label className="flex items-center gap-3 cursor-pointer bg-white px-6 py-3 rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={showFullTree}
+                        onChange={(e) => setShowFullTree(e.target.checked)}
+                        className="form-checkbox h-5 w-5 text-blue-600 rounded"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Show Full Search Tree</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-xl p-6 shadow-inner border-2 border-gray-100">
+                  <NodeGraph
+                    root={
+                      showFullTree
+                        ? solution.tree ?? { state: initialState, children: [] }
+                        : buildNodeGraph(initialState, solution.path)
+                    }
+                    highlightStep={currentStep}
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {solution && solution.error && (
-        <div className="bg-red-100 border border-red-300 rounded p-4 mb-6">
-          <p className="text-red-700">{solution.error}</p>
-        </div>
-      )}
+        {/* Error Display */}
+        {solution && solution.error && (
+          <div className="bg-white rounded-3xl shadow-xl border border-red-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-8">
+              <div className="text-center">
+                <div className="text-3xl font-bold mb-2">خطأ في البحث</div>
+                <p className="text-red-100 text-lg">{solution.error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
