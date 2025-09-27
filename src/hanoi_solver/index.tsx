@@ -21,12 +21,6 @@ interface SearchResult {
   goal?: Goal;
 }
 
-interface CompleteSolution extends SearchResult {
-  phase1: SearchResult;
-  phase2: SearchResult;
-  totalMoves: number;
-}
-
 // NodeGraphNode structure to represent the tree
 interface NodeGraphNode {
   state: State;
@@ -52,9 +46,8 @@ const HanoiSolver: React.FC = () => {
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [animationSpeed, setAnimationSpeed] = useState<number>(500);
-  const [currentGoal, setCurrentGoal] = useState<Goal>("B");
-  const [showFullTree, setShowFullTree] = useState<boolean>(true);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [showFullTree, ] = useState<boolean>(true);
+  const [isAutoPlaying, ] = useState(false);
   
   // State representation: [rod_A, rod_B, rod_C] where each rod is array of disks (1=smallest, 4=largest)
   const initialState: State = [[4, 3, 2, 1], [], []];
@@ -182,7 +175,6 @@ const HanoiSolver: React.FC = () => {
       if (solutionNode && solutionPath.length > 0) {
         let node = visited.get(stateToString(startState));
         let step = 0;
-        let state = startState;
         for (const move of solutionPath) {
           const nextStr = stateToString(move.state);
           const child = node?.children.find(
@@ -191,7 +183,6 @@ const HanoiSolver: React.FC = () => {
           if (child) {
             child.step = ++step;
             node = child;
-            state = move.state;
           }
         }
       }
@@ -260,7 +251,6 @@ const HanoiSolver: React.FC = () => {
       if (solutionPath.length > 0) {
         let node = visited.get(stateToString(startState));
         let step = 0;
-        let state = startState;
         for (const move of solutionPath) {
           const nextStr = stateToString(move.state);
           const child = node?.children.find(
@@ -269,7 +259,6 @@ const HanoiSolver: React.FC = () => {
           if (child) {
             child.step = ++step;
             node = child;
-            state = move.state;
           }
         }
       }
@@ -353,31 +342,7 @@ const HanoiSolver: React.FC = () => {
   };
 
   // Solve single phase (A→B or B→C)
-  const handleSolveSingle = (algorithm: "BFS" | "DFS", goal: Goal): void => {
-    setIsSearching(true);
-    setSolution(null);
-    setCurrentStep(0);
-    setCurrentGoal(goal);
-
-    setTimeout(() => {
-      const solveFunc = algorithm === "BFS" ? solveBFS : solveDFS;
-      const startState: State =
-        goal === "B" ? initialState : [[], [4, 3, 2, 1], []]; // B→C starts with all disks on B
-      const result = solveFunc(startState, goal);
-
-      if (result) {
-        setSolution(result);
-      } else {
-        setSolution({
-          error: `No solution found for ${goal === "B" ? "A → B" : "B → C"}`,
-          path: [],
-          nodesExplored: 0,
-          algorithm,
-        });
-      }
-      setIsSearching(false);
-    }, 100);
-  };
+  
 
   const renderRods = (state: State): JSX.Element => {
     const [rodA, rodB, rodC] = state;
@@ -674,9 +639,6 @@ const HanoiSolver: React.FC = () => {
     const treeInfo = buildTreeInfo(root);
     const dimensions = getTreeDimensions(treeInfo);
 
-    // Calculate offset to center the tree
-    const offset = -dimensions.minPos * 100;
-
     return (
       <div className="w-full overflow-hidden">
         <div className="relative" style={{ height: `${dimensions.height}px` }}>
@@ -900,6 +862,7 @@ const HanoiSolver: React.FC = () => {
                             background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((animationSpeed - 100) / 900) * 100}%, #e2e8f0 ${((animationSpeed - 100) / 900) * 100}%, #e2e8f0 100%)`
                           }}
                         />
+						{/* @ts-ignore */}
                         <style jsx>{`
                           .slider::-webkit-slider-thumb {
                             appearance: none;
@@ -971,7 +934,7 @@ const HanoiSolver: React.FC = () => {
                   <h3 className="text-2xl font-bold text-gray-800 mb-4">
                     Node Graph ({solution.algorithm})
                   </h3>
-                  <div className="flex justify-center mb-6">
+                  {/* <div className="flex justify-center mb-6">
                     <label className="flex items-center gap-3 cursor-pointer bg-white px-6 py-3 rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors">
                       <input
                         type="checkbox"
@@ -981,7 +944,7 @@ const HanoiSolver: React.FC = () => {
                       />
                       <span className="text-sm font-medium text-gray-700">Show Full Search Tree</span>
                     </label>
-                  </div>
+                  </div> */}
                 </div>
                 
                 <div className="bg-white rounded-xl p-6 shadow-inner border-2 border-gray-100">
